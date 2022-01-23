@@ -13,9 +13,9 @@ spring:
       username: sa
       password:
       driver-class-name: org.h2.Driver
-  batch:
-    jdbc:
-      initialize-schema: embedded
+
+
+
 ---
 spring:
   config:
@@ -27,6 +27,7 @@ spring:
       username: root
       password: 1234
       driver-class-name: com.mysql.jdbc.Driver
+
   batch:
     jdbc:
       initialize-schema: always
