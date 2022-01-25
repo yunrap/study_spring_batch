@@ -23,11 +23,12 @@ spring:
       on-profile: mysql
   datasource:
     hikari:
-      jdbc-url: jdbc:mysql://localhost:3306/springbatch?useUnicode=true&characterEncoding=utf8
+      jdbc-url: jdbc:mariadb://localhost:3306/testdb?useUnicode=true&characterEncoding=utf8
       username: root
-      password: 1234
-      driver-class-name: com.mysql.jdbc.Driver
-
+      password: root
+      driver-class-name: org.mariadb.jdbc.Driver
   batch:
     jdbc:
       initialize-schema: always
+    job:
+      enabled: true
