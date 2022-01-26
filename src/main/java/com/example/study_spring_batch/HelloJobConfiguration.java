@@ -1,4 +1,3 @@
-/*
 package com.example.study_spring_batch;
 
 import lombok.RequiredArgsConstructor;
@@ -9,9 +8,14 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
 
 @RequiredArgsConstructor
 @Configuration
@@ -19,12 +23,13 @@ public class HelloJobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+    private int chunkSize = 10;
+    private final DataSource dataSource;
 
     @Bean
     public Job helloJob(){
         return jobBuilderFactory.get("helloJob")
                 .start(helloStep1())
-                .next(helloStep2())
                 .build();
     }
 
@@ -32,33 +37,30 @@ public class HelloJobConfiguration {
     @Bean
     public Step helloStep1(){
         return stepBuilderFactory.get("helloStep1")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-
-                        System.out.println("====================");
-                        System.out.println(" >> HELLO SPRING BATCH!! ");
-                        System.out.println("====================");
-                        return RepeatStatus.FINISHED;
-                    }
-                })
+                .<Car, Car>chunk(10)
+                .reader(customItemReader())
+                .writer(customItemWriter())
                 .build();
     }
 
     @Bean
-    public Step helloStep2(){
-        return stepBuilderFactory.get("helloStep2")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public ItemReader<Car> customItemReader() {
+            return new JdbcCursorItemReaderBuilder<Car>()
+                    .name("JdbcCursorItemReader")
+                    .fetchSize(chunkSize)
+                    .sql("select VHCL_CODE, VHCL_RGSNO, VHCL_MAKER, VHCL_NAME, VHCL_CLR, MING_FG, CRN_DTM, UDT_DTM FROM PG_HINT_CAR WHERE VHCL_MAKER like ? ")
+                    .beanRowMapper(Car.class)
+                    .queryArguments("현%")
+                    .dataSource(dataSource)
+                    .build();
+    }
 
-                        System.out.println("====================");
-                        System.out.println(" >> STEP2 WAS EXECUTED ");
-                        System.out.println("====================");
-                        return RepeatStatus.FINISHED;
-                    }
-                })
-                .build();
+    @Bean
+    public ItemWriter<Car> customItemWriter(){
+        return items -> {
+            for(Car item : items){
+                System.out.println(item.toString());
+            }
+        };
     }
 }
-*/
