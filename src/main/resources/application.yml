@@ -1,6 +1,22 @@
 spring:
   profiles:
-    active: local
+    active: develop
+  batch:
+    job:
+      names: ${job.name:NONE}
+
+#groupping
+---
+spring:
+  profiles:
+    group:
+      develop :
+        - devdb
+
+
+
+
+
 
 ---
 spring:
@@ -20,7 +36,9 @@ spring:
 spring:
   config:
     activate:
-      on-profile: mysql
+      on-profile: devdb
+  main:
+    allow-bean-definition-overriding: true
   datasource:
     hikari:
       jdbc-url: jdbc:mariadb://localhost:3306/testdb?useUnicode=true&characterEncoding=utf8
@@ -32,3 +50,15 @@ spring:
       initialize-schema: always
     job:
       enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
