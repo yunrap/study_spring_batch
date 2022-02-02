@@ -100,13 +100,22 @@ public class TestJobConfiguration {
                 .fetchSize(chunckSize)
                 .dataSource(dataSource)
                 .rowMapper(new BeanPropertyRowMapper<>(TestTireTotal.class))
-                //.sql()
+                .sql(" SELECT hpo.REQ_NO as reqNo, hpo.PLN_DTM as plnDtm, hpo.TEST_ITEM_NAME as testItemName," +
+                        "sum(hpo.SET_SIZE)as setSize," +
+                        "group_concat(distinct hpo.SPEC_SIZE) as tireSize," +
+                        "group_concat(distinct hpo.RIM_SIZE) as wheelSize," +
+                        "group_concat(distinct hpo.VHCL_Code) as vhclCode," +
+                        "group_concat(distinct phc.VHCL_NAME) as vhclName," +
+                        "group_concat(distinct hpo.TIRE_FLOW) as returnScrap," +
+                        "hpo.TC_SEQ as tcSeq " +
+                        "FROM TEST_PLAN_ORIGIN hpo join PG_TEST_CAR phc on hpo.VHCL_CODE = phc.VHCL_CODE" +
+                        "GROUP BY REQ_NO, PLN_DTM, TEST_ITEM_NAME")
                 .name("selectTestTireTotal")
                 .build();
     }
 
     @Bean
-    public ItemWriter<? super TestTireTotal> saveTireTotal(){
+    public ItemWriter<TestTireTotal> saveTireTotal(){
         return list -> {
             for(TestTireTotal testTireTotal : list) {
                 String[] plnDtm = testTireTotal.getPlnDtm().split("-");
