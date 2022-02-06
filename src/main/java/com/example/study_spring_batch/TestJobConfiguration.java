@@ -1,8 +1,10 @@
 package com.example.study_spring_batch;
 
 
+import com.example.study_spring_batch.domain.TestPlan;
 import com.example.study_spring_batch.domain.TestPlanOrigin;
 import com.example.study_spring_batch.domain.TestTireTotal;
+import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestTireService;
 
 
@@ -37,6 +39,8 @@ public class TestJobConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
     private final EntityManagerFactory entityManagerFactory;
 
+
+    private final TestAllPlanService testAllPlanService;
     //private final TestTireService testTireService;
 
     private final DataSource dataSource;
@@ -46,7 +50,7 @@ public class TestJobConfiguration {
     @Bean
     public Job testJob(){
         return jobBuilderFactory.get("testJob")
-                .start(findAllTestPlan(null))
+                .start(findAllTestPlan(null))   //시험
                 .next(totalTestTireData(null))  //타이어 집계
                 .build();
     }
@@ -61,27 +65,28 @@ public class TestJobConfiguration {
                 .build();
     }
 
-
     @Bean
-    public JpaPagingItemReader<TestPlanOrigin> findAllTestReader() {
-        return new JpaPagingItemReaderBuilder<TestPlanOrigin>()
-                .name("findAllTestReader")
-                .entityManagerFactory(entityManagerFactory)
-                .pageSize(chunckSize)
-                .queryString("SELECT c FROM TestPlanOrigin c join fetch c.pgTestCar h")
+    public JdbcCursorItemReader<TestPlan> findAllTestReader() {
+        return new JdbcCursorItemReaderBuilder<TestPlan>()
+                .fetchSize(chunckSize)
+                .dataSource(dataSource)
+                .rowMapper(new BeanPropertyRowMapper<>(TestPlan.class))
+                .sql("SELECT REQ_NO, PLN_DTM, EGNR_EPNO_1 as engineerOne, EGNR_EPNO_2 as engineerTwo, VHCL_CODE, SPEC_SIZE, BARCD_NO, SET_SIZE, TIRE_FLOW, " +
+                        "TEST_ITEM_NAME, RIM_SIZE, AIR_PRSS, PGS_STATUS, UDT_DTM FROM IF_TEST_PLN ORDER BY REQ_NO,PGS_STATUS,UDT_DTM desc")
+                .name("findAllPlanReader")
                 .build();
     }
 
     @Bean
-    public ItemWriter<TestPlanOrigin> findAllPlanWriter() {
-        return items -> {
-
-            for(TestPlanOrigin item : items){
-                String planDay = item.getPlnDtm().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-                //testTireService.insertTire(planDay, item);
+    public ItemWriter<TestPlan> findAllPlanWriter() {
+        return list -> {
+            for (TestPlan testPlan : list) {
+                testAllPlanService.testPlanProcess(testPlan);
             }
         };
     }
+
+
 
     /*타이어집계학인*/
     @Bean
