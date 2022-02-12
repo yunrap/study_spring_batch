@@ -1,14 +1,18 @@
 package com.example.study_spring_batch.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+@Builder
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
 @Table(name = "TEST_PLAN_ORIGIN")
 public class TestPlanOrigin {
 
@@ -64,5 +68,7 @@ public class TestPlanOrigin {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name= "VHCL_CODE", insertable = false, updatable = false)
-    private PgTestCar pgTestCar;
+    private TestCar testCar;
+
+    public TestPlanOrigin() { this.reqNo = "NONE";}
 }
