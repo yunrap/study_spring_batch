@@ -6,11 +6,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
 public interface TestPlanOriginRepository extends JpaRepository<TestPlanOrigin, Integer> {
+
+    @Transactional  //트랜잭션을 사용해야하는이유??? 다시.
+    void deleteByReqNo(String reqNo);
+
 
     @Query("select h from TestPlanOrigin h where h.reqNo = :reqNo and h.plnDtm = :plnDtm and h.engineerOneNo = :engineerOneNo and (:engineerTwoNo is null or h.engineerTwoNo = :engineerTwoNo) and (:vhclCode is null or h.vhclCode = :vhclCode)" +
             "and (:specSize is null or h.specSize = :specSize) and (:barcodeNo is null or h.barcodeNo = :barcodeNo) and (:setSize is null or h.setSize = :setSize) and h.tireFlow = :tireFlow and h.testItemName = :testItemName and (:rimSize is null or h.rimSize = :rimSize) and " +
