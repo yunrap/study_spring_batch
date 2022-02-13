@@ -9,6 +9,6 @@ import java.util.Optional;
 @Repository
 public interface TestScheduleRepository extends JpaRepository<TestSchedule,Long> {
 
-    Optional<TestSchedule> findByTcReqNumAndTcDay(String regNo, String tcDay);
+    Optional<TestSchedule> findByRegNoAndTcDay(String regNo, String tcDay);
 
 }

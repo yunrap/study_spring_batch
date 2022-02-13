@@ -1,10 +1,14 @@
 package com.example.study_spring_batch.service;
 
+import com.example.study_spring_batch.domain.TestPlanOrigin;
 import com.example.study_spring_batch.domain.TestSchedule;
 import com.example.study_spring_batch.repository.TestScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service
@@ -12,10 +16,40 @@ import java.util.Optional;
 public class TestSchedulerService {
 
     private final TestScheduleRepository testScheduleRepository;
+    private static final String tcApproval = "3";
+    private static final String tcStep = "00000";
+    private static final String compCode = "BBAMIN";
+    private static final String YES = "Y";
+    private static final String BAMINDV = "배달의민족";
+    private static final String BAMIN = "BAMIN";
 
-    public Optional<TestSchedule> findAllByTcReqNumAndTcDay(String regNo, String tcDay)
+    public Optional<TestSchedule> findAllByRegNoAndTcDay(String regNo, String tcDay)
     {
-        return testScheduleRepository.findByTcReqNumAndTcDay(regNo, tcDay);
+        return testScheduleRepository.findByRegNoAndTcDay(regNo, tcDay);
+    }
+
+    public void insertTestSchedule(String planDay, String tcReservationCode, TestPlanOrigin tpo){
+        TestSchedule testSchedule = TestSchedule.builder()
+                .tcDay(planDay)
+                .tcDayEnd(planDay)
+                .regNo(tpo.getReqNo())
+                .tcReservCode(tcReservationCode)
+                .carNumber(tpo.getTestCar().getRgsNo())
+                .carVender(tpo.getTestCar().getMaker())
+                .carName(tpo.getTestCar().getName())
+                .carColor(tpo.getTestCar().getColor())
+                .tcRegDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
+                .tcAgreement(YES)
+                .tcPurpose("BAMIN 시험")
+                .tcRegUser(BAMIN)
+                .compName(BAMINDV)
+                .tcApproval(tcApproval)
+                .tcStep(tcStep)
+                .compCode(compCode)
+                .build();
+        testScheduleRepository.save(testSchedule);
+
+        tpo.setTcSeq(testSchedule.getTcSeq());
     }
 
 }
