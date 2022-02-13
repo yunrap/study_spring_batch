@@ -19,7 +19,7 @@ public class TestSchedule {
     @Column(name = "TC_DAY")
     private String tcDay;
     @Column(name = "TC_REQUEST_NUMBER")
-    private String tcReqNum;
+    private String regNo;
     @Column(name = "TC_DAY2")
     private String tcDayEnd;
     @Column(name = "COMP_CODE")
@@ -56,6 +56,6 @@ public class TestSchedule {
     private String tcModDate;
 
     public TestSchedule() {
-        this.tcReqNum = "NONE";
+        this.regNo = "NONE";
     }
 }
