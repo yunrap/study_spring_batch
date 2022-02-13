@@ -2,10 +2,11 @@
 package com.example.study_spring_batch;
 
 
-import com.example.study_spring_batch.domain.TestPlan;
-import com.example.study_spring_batch.domain.TestPlanOrigin;
-import com.example.study_spring_batch.domain.TestSchedule;
+import com.example.study_spring_batch.domain.*;
+import com.example.study_spring_batch.repository.TestDriverRepository;
+import com.example.study_spring_batch.repository.TestResourceRepository;
 import com.example.study_spring_batch.service.TestAllPlanService;
+import com.example.study_spring_batch.service.TestResourceMappingService;
 import com.example.study_spring_batch.service.TestSchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +44,13 @@ public class TestJobConfiguration {
 
     private final TestAllPlanService testAllPlanService;
     private final TestSchedulerService testSchedulerService;
+    private final TestResourceMappingService testResourceMappingService;
     private final DataSource dataSource;
 
+    private final TestResourceRepository testResourceRepository;
+    private final TestDriverRepository testDriverRepository;
+
+    private static final String NONE = "NONE";
     private final int chunckSize = 1;
     private static String tcReservationCode = "T220101H000";
 
@@ -121,7 +127,7 @@ public class TestJobConfiguration {
         return list -> {
             for(TestSchedule testTestSchedule : list){
                 if(testTestSchedule.getTcReservCode().equals("1")){
-                    tcReservationCode = "T"+today+"HOOO";
+                    tcReservationCode = "T"+today+"H000";
                 }else{
                     tcReservationCode = testTestSchedule.getTcReservCode();
                 }
@@ -152,15 +158,45 @@ public class TestJobConfiguration {
     public ItemWriter<TestPlanOrigin> insertTestScheduleSeqToTest() {
         return list -> {
             for(TestPlanOrigin tpo : list){
-                String planDay = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
-                TestSchedule checkRegNo = testSchedulerService.findAllByTcReqNumAndTcDay(tpo.getReqNo(), planDay).orElseGet(TestSchedule::new);
+                String planDay = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+                //step2 : TEST_PLAN_ORIGIN -> TEST_PACKAGE_MAPPING
+                //우선생략
+
+
+                //step1 : TEST_PLAN_ORIGIN -> TEST_SCHEDULE
+                TestSchedule checkRegNo = testSchedulerService.findAllByRegNoAndTcDay(tpo.getReqNo(), planDay).orElseGet(TestSchedule::new);
 
                 System.out.println("===================="+checkRegNo);
 
+                if(checkRegNo.getRegNo().equals(NONE)){
+                    String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
+                    StringBuilder sb = new StringBuilder();
+                    int n = Integer.parseInt(tcReservationCode.substring(8)) + 1;
+                    tcReservationCode = sb.append("T").append(today).append("H").append(n < 10 ? "00" + n : n < 100 ? "0" + n : String.valueOf(n)).toString();
+
+                    testSchedulerService.insertTestSchedule(planDay, tcReservationCode, tpo);
+                }else
+                {
+                    tpo.setTcSeq(checkRegNo.getTcSeq());    //이미 테스트 스케쥴에 존재할경우 계속 tcseq를 넣어준다
+                }
+
+
+                //step3
+                if(tpo.getEngineerOneNo() != null){
+                    TestResource testResource = testResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestResource::new);
+                    TestDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestDriver::new);
+
+                    System.out.println("========="+testResource);
+                    System.out.println(testDriver);
+
+                    testResourceMappingService.insertEngineer(planDay, testResource, testDriver, tpo, "ONE");
+                }
+
             }
         };
-    }
 
+    };
 
     /*
     @Bean
