@@ -21,29 +21,35 @@ public class TestResourceMappingService {
     private static final String TWO = "TWO";
     private static final String NONE = "0";
 
+    @Transactional
     public void insertEngineer(String planDay, TestResource testResource, TestDriver testDriver, TestPlanOrigin tpo, String type){
         TestResourceMapping testResourceMapping = null;
 
-        //int dupCount = testResourceRepository.countByTcSeqAndTcDayAndVhclCode(tpo.getTcSeq(), planDay, tpo.getVhclCode());
+        int dupCount = testResourceRepository.countByTcSeqAndTcDayAndDriverNumber(tpo.getTcSeq(), planDay, Integer.parseInt(testDriver.getEmployeeNo()));
 
-        if(testResource.getEmployeeNo().equals("0")){      //TEST_RESOURCE employeeno가 없을땐
-            testResourceMapping = TestResourceMapping.builder()
-                    .tcSeq(tpo.getTcSeq())
-                    .tcDay(planDay)
-                    .driverNumber(Integer.parseInt(testDriver.getEmployeeNo()))
-                    .driverName(testDriver.getName())
-                    .level(testDriver.getEngineerLevel())
-                    .inOut("I")
-                    .dccpYn("N")
-                    .registerDay(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
-                    .build();
+        if(dupCount == 0) {
+            if(testResource.getEmployeeNo().equals(NONE)){      //TEST_RESOURCE employeeno가 없을땐
+                testResourceMapping = TestResourceMapping.builder()
+                        .tcSeq(tpo.getTcSeq())
+                        .tcDay(planDay)
+                        .driverNumber(Integer.parseInt(testDriver.getEmployeeNo()))
+                        .driverName(testDriver.getName())
+                        .level(testDriver.getEngineerLevel())
+                        .inOut("I")
+                        .dccpYn("N")
+                        .registerDay(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
+                        .build();
 
-            if (testResourceMapping != null && type.equals(ONE)) {
-                tpo.setRmSeqOne(testResourceMapping.getRmSeq());
-            }
-            if (testResourceMapping != null && type.equals(TWO)) {
-                tpo.setRmSeqTwo(testResourceMapping.getRmSeq());
+                testResourceRepository.save(testResourceMapping);
+
+                if (testResourceMapping != null && type.equals(ONE)) {
+                    tpo.setRmSeqOne(testResourceMapping.getRmSeq());
+                }
+                if (testResourceMapping != null && type.equals(TWO)) {
+                    tpo.setRmSeqTwo(testResourceMapping.getRmSeq());
+                }
             }
         }
+
     }
 }
