@@ -3,6 +3,7 @@ package com.example.study_spring_batch;
 
 
 import com.example.study_spring_batch.domain.*;
+import com.example.study_spring_batch.repository.TestBaminResourceRepository;
 import com.example.study_spring_batch.repository.TestDriverRepository;
 import com.example.study_spring_batch.repository.TestResourceRepository;
 import com.example.study_spring_batch.service.TestAllPlanService;
@@ -49,6 +50,7 @@ public class TestJobConfiguration {
 
     private final TestResourceRepository testResourceRepository;
     private final TestDriverRepository testDriverRepository;
+    private final TestBaminResourceRepository testBaminResourceRepository;
 
     private static final String NONE = "NONE";
     private final int chunckSize = 1;
@@ -140,6 +142,9 @@ public class TestJobConfiguration {
     public Step insertTestScheduleStep(@Value("#{jobParameters[requestDate]}") String requestDate) {
         return stepBuilderFactory.get("insertTestScheduleStep")
                 .<TestPlanOrigin, TestPlanOrigin>chunk(chunckSize)
+                .faultTolerant()
+                .skip(IllegalArgumentException.class) //IllegalArgumentException 발생 시 skip함
+                .skipLimit(10)
                 .reader(selectTestPlanOriginReader())
                 .writer(insertTestScheduleSeqToTest())
                 .build();
@@ -184,7 +189,7 @@ public class TestJobConfiguration {
 
                 //step3
                 if(tpo.getEngineerOneNo() != null){
-                    TestResource testResource = testResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestResource::new);
+                    TestResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestResource::new);
                     TestDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestDriver::new);
 
                     System.out.println("========="+testResource);
@@ -192,6 +197,7 @@ public class TestJobConfiguration {
 
                     testResourceMappingService.insertEngineer(planDay, testResource, testDriver, tpo, "ONE");
                 }
+
 
             }
         };
