@@ -1,3 +1,4 @@
+/*
 package com.example.study_spring_batch.service;
 
 import com.example.study_spring_batch.domain.TestPlan;
@@ -77,3 +78,4 @@ public class TestAllPlanService {
     }
 
 }
+*/

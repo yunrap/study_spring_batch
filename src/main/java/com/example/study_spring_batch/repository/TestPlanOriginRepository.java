@@ -8,13 +8,16 @@ import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface TestPlanOriginRepository extends JpaRepository<TestPlanOrigin, Integer> {
 
-    @Transactional  //트랜잭션을 사용해야하는이유??? 다시.
+    @Transactional
     void deleteByReqNo(String reqNo);
+
+    List<TestPlanOrigin> findByReqNo(String reqNo);
 
 
     @Query("select h from TestPlanOrigin h where h.reqNo = :reqNo and h.plnDtm = :plnDtm and h.engineerOneNo = :engineerOneNo and (:engineerTwoNo is null or h.engineerTwoNo = :engineerTwoNo) and (:vhclCode is null or h.vhclCode = :vhclCode)" +
