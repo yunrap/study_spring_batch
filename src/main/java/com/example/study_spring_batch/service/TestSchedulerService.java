@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,6 +28,8 @@ public class TestSchedulerService {
     {
         return testScheduleRepository.findByRegNoAndTcDay(regNo, tcDay);
     }
+
+    public List<TestSchedule> findAllByRegNo(String regNo) {return testScheduleRepository.findByRegNo(regNo);}
 
     public void insertTestSchedule(String planDay, String tcReservationCode, TestPlanOrigin tpo){
         TestSchedule testSchedule = TestSchedule.builder()
@@ -50,6 +53,11 @@ public class TestSchedulerService {
         testScheduleRepository.save(testSchedule);
 
         tpo.setTcSeq(testSchedule.getTcSeq());
+    }
+
+    @Transactional
+    public void deleteTestSchedule(int tcSeq) {
+        testScheduleRepository.deleteByTcSeq(tcSeq);
     }
 
 }

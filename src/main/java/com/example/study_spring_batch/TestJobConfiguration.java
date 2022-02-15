@@ -6,7 +6,8 @@ import com.example.study_spring_batch.domain.*;
 import com.example.study_spring_batch.repository.TestBaminResourceRepository;
 import com.example.study_spring_batch.repository.TestDriverRepository;
 import com.example.study_spring_batch.repository.TestResourceRepository;
-import com.example.study_spring_batch.service.TestAllPlanService;
+//import com.example.study_spring_batch.service.TestAllPlanService;
+import com.example.study_spring_batch.service.TestAllPlanService2;
 import com.example.study_spring_batch.service.TestResourceMappingService;
 import com.example.study_spring_batch.service.TestSchedulerService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,8 @@ public class TestJobConfiguration {
 
     private final EntityManagerFactory originEntityManagerFactory;  //DB 당 하나씩사용
 
-    private final TestAllPlanService testAllPlanService;
+    //private final TestAllPlanService testAllPlanService;
+    private final TestAllPlanService2 testAllPlanService2;
     private final TestSchedulerService testSchedulerService;
     private final TestResourceMappingService testResourceMappingService;
     private final DataSource dataSource;
@@ -61,8 +63,8 @@ public class TestJobConfiguration {
     public Job testJob(){
         return jobBuilderFactory.get("testJob")
                 .start(findAllTestPlan(null))   //시험 계획정보 EAI 연동
-                .next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
-                .next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
+                //.next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
+                //.next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
                 //.next(totalTestTireData(null))  //타이어 집계
                 .build();
     }
@@ -93,7 +95,7 @@ public class TestJobConfiguration {
     public ItemWriter<TestPlan> findAllPlanWriter() {
         return list -> {
             for (TestPlan testPlan : list) {
-                testAllPlanService.testPlanProcess(testPlan);
+                testAllPlanService2.testPlanProcess(testPlan);
 
             }
         };
