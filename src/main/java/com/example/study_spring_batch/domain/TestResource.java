@@ -10,7 +10,7 @@ import javax.persistence.*;
 @Entity
 @ToString
 @AllArgsConstructor
-@Table(name = "TEST_RESOURCE")
+@Table(name = "TEST_BAMIN_RESOURCE")
 public class TestResource {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

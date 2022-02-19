@@ -25,14 +25,14 @@ public class TestResourceMappingService {
     public void insertEngineer(String planDay, TestResource testResource, TestDriver testDriver, TestPlanOrigin tpo, String type){
         TestResourceMapping testResourceMapping = null;
 
-        int dupCount = testResourceRepository.countByTcSeqAndTcDayAndDriverNumber(tpo.getTcSeq(), planDay, Integer.parseInt(testDriver.getEmployeeNo()));
+        int dupCount = testResourceRepository.countByTcSeqAndTcDayAndDriverNumber(tpo.getTcSeq(), planDay, testDriver.getEmployeeNo());
 
         if(dupCount == 0) {
-            if(testResource.getEmployeeNo().equals(NONE)){      //TEST_RESOURCE employeeno가 없을땐
+            if(testResource.getEmployeeNo().equals(NONE)){      //평가자에서 새롭게등록한 rfid는 넣지않기위한 조건
                 testResourceMapping = TestResourceMapping.builder()
                         .tcSeq(tpo.getTcSeq())
                         .tcDay(planDay)
-                        .driverNumber(Integer.parseInt(testDriver.getEmployeeNo()))
+                        .driverNumber(testDriver.getEmployeeNo() + "H")
                         .driverName(testDriver.getName())
                         .level(testDriver.getEngineerLevel())
                         .inOut("I")

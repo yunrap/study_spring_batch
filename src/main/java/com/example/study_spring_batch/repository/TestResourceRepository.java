@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface TestResourceRepository extends JpaRepository<TestResourceMapping, Long> {
-       int countByTcSeqAndTcDayAndDriverNumber(Integer tcSeq, String planDay, int driverNumber);
+       int countByTcSeqAndTcDayAndDriverNumber(Integer tcSeq, String planDay, String driverNumber);
 
 
 }
