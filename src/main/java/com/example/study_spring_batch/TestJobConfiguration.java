@@ -122,7 +122,7 @@ public class TestJobConfiguration {
                         "(select TC_RESERV_CODE from TEST_SCHDULE where TC_RESERV_CODE like 'T"+today+"H%' ORDER BY TC_SEQ desc limit 1) end as TC_RESERV_CODE " +
                         "FROM TEST_SCHDULE WHERE TC_RESERV_CODE like 'T"+today+"H%'")
                 .build();
-    }
+    } //테스트
 
     @Bean
     public ItemWriter<TestSchedule> saveMaxNumber() {
