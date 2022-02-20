@@ -44,6 +44,7 @@ public class TestJobConfiguration {
 
     private final EntityManagerFactory originEntityManagerFactory;  //DB 당 하나씩사용
 
+    //private final TestAllPlanService testAllPlanService;
     private final TestAllPlanService2 testAllPlanService2;
     private final TestSchedulerService testSchedulerService;
     private final TestResourceMappingService testResourceMappingService;
@@ -62,8 +63,8 @@ public class TestJobConfiguration {
     public Job testJob(){
         return jobBuilderFactory.get("testJob")
                 .start(findAllTestPlan(null))   //시험 계획정보 EAI 연동
-                .next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
-                .next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
+                //.next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
+                //.next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
                 //.next(totalTestTireData(null))  //타이어 집계
                 .build();
     }
@@ -143,9 +144,9 @@ public class TestJobConfiguration {
     public Step insertTestScheduleStep(@Value("#{jobParameters[requestDate]}") String requestDate) {
         return stepBuilderFactory.get("insertTestScheduleStep")
                 .<TestPlanOrigin, TestPlanOrigin>chunk(chunckSize)
-//                .faultTolerant()
-//                .skip(IllegalArgumentException.class) //IllegalArgumentException 발생 시 skip함
-//                .skipLimit(10)
+                .faultTolerant()
+                .skip(IllegalArgumentException.class) //IllegalArgumentException 발생 시 skip함
+                .skipLimit(10)
                 .reader(selectTestPlanOriginReader())
                 .writer(insertTestScheduleSeqToTest())
                 .build();
@@ -190,11 +191,12 @@ public class TestJobConfiguration {
 
                 //step3
                 if(tpo.getEngineerOneNo() != null){
-                    TestResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestResource::new);  //
+                    TestResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestResource::new);
                     TestDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestDriver::new);
 
                     System.out.println("========="+testResource);
-                    System.out.println("oooooooooo"+testDriver);
+                    System.out.println(testDriver);
+
                     testResourceMappingService.insertEngineer(planDay, testResource, testDriver, tpo, "ONE");
                 }
 
