@@ -18,7 +18,7 @@ public class TestResourceMapping {
     @Column(name = "RM_SEQ")
     private int rmSeq;
     @Column(name ="D_SEQ")
-    private String driverNumber;
+    private int driverNumber;
     @Column(name = "RM_LEVEL") //운전자 or 차량에 따라 매핑될 레벨
     private String level;
     @Column(name = "RM_TYPE") //운전자 (D) 차량 (C)
@@ -47,7 +47,7 @@ public class TestResourceMapping {
     private String registerDay;
 
     public TestResourceMapping() {
-        this.driverNumber = "NONE";
+        this.driverNumber = 0;
         this.vhclCode = "0";
     }
 }
