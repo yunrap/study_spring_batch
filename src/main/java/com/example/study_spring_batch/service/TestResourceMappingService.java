@@ -1,8 +1,8 @@
 package com.example.study_spring_batch.service;
 
-import com.example.study_spring_batch.domain.TestDriver;
+import com.example.study_spring_batch.domain.TestBaminDriver;
 import com.example.study_spring_batch.domain.TestPlanOrigin;
-import com.example.study_spring_batch.domain.TestResource;
+import com.example.study_spring_batch.domain.TestBaminResource;
 import com.example.study_spring_batch.domain.TestResourceMapping;
 import com.example.study_spring_batch.repository.TestResourceRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class TestResourceMappingService {
     private static final String NONE = "0";
 
     @Transactional
-    public void insertEngineer(String planDay, TestResource testResource, TestDriver testDriver, TestPlanOrigin tpo, String type){
+    public void insertEngineer(String planDay, TestBaminResource testResource, TestBaminDriver testDriver, TestPlanOrigin tpo, String type){
         TestResourceMapping testResourceMapping = null;
 
         int dupCount = testResourceRepository.countByTcSeqAndTcDayAndDriverNumber(tpo.getTcSeq(), planDay, Integer.parseInt(testDriver.getEmployeeNo()));
@@ -32,7 +32,7 @@ public class TestResourceMappingService {
                 testResourceMapping = TestResourceMapping.builder()
                         .tcSeq(tpo.getTcSeq())
                         .tcDay(planDay)
-                        .driverNumber(Integer.parseInt(testDriver.getEmployeeNo()))
+                        .driverNumber(testDriver.getEmployeeNo())
                         .driverName(testDriver.getName())
                         .level(testDriver.getEngineerLevel())
                         .inOut("I")

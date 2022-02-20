@@ -3,11 +3,11 @@ package com.example.study_spring_batch;
 
 
 import com.example.study_spring_batch.domain.*;
+import com.example.study_spring_batch.repository.TestBaminDriverRepository;
 import com.example.study_spring_batch.repository.TestBaminResourceRepository;
-import com.example.study_spring_batch.repository.TestDriverRepository;
 import com.example.study_spring_batch.repository.TestResourceRepository;
 //import com.example.study_spring_batch.service.TestAllPlanService;
-import com.example.study_spring_batch.service.TestAllPlanService2;
+import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestResourceMappingService;
 import com.example.study_spring_batch.service.TestSchedulerService;
 import lombok.RequiredArgsConstructor;
@@ -44,14 +44,14 @@ public class TestJobConfiguration {
 
     private final EntityManagerFactory originEntityManagerFactory;  //DB 당 하나씩사용
 
-    //private final TestAllPlanService testAllPlanService;
-    private final TestAllPlanService2 testAllPlanService2;
+    private final TestAllPlanService testAllPlanService;
+    //private final TestAllPlanService2 testAllPlanService2;
     private final TestSchedulerService testSchedulerService;
     private final TestResourceMappingService testResourceMappingService;
     private final DataSource dataSource;
 
     private final TestResourceRepository testResourceRepository;
-    private final TestDriverRepository testDriverRepository;
+    private final TestBaminDriverRepository testDriverRepository;
     private final TestBaminResourceRepository testBaminResourceRepository;
 
     private static final String NONE = "NONE";
@@ -95,7 +95,7 @@ public class TestJobConfiguration {
     public ItemWriter<TestPlan> findAllPlanWriter() {
         return list -> {
             for (TestPlan testPlan : list) {
-                testAllPlanService2.testPlanProcess(testPlan);
+                testAllPlanService.testPlanProcess(testPlan);
 
             }
         };
@@ -191,8 +191,8 @@ public class TestJobConfiguration {
 
                 //step3
                 if(tpo.getEngineerOneNo() != null){
-                    TestResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestResource::new);
-                    TestDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestDriver::new);
+                    TestBaminResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestBaminResource::new);
+                    TestBaminDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestBaminDriver::new);
 
                     System.out.println("========="+testResource);
                     System.out.println(testDriver);

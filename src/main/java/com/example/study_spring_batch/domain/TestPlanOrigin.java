@@ -68,7 +68,7 @@ public class TestPlanOrigin {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name= "VHCL_CODE", insertable = false, updatable = false)
-    private TestCar testCar;
+    private TestBaminCar testCar;
 
     public TestPlanOrigin() { this.reqNo = "NONE";}
 }

@@ -1,4 +1,4 @@
-/*
+
 package com.example.study_spring_batch.service;
 
 import com.example.study_spring_batch.domain.TestPlan;
@@ -52,7 +52,7 @@ public class TestAllPlanService {
             }
 
         }else{
-        //2. update가 존재안할시
+            //2. update가 존재안할시
             if(checkPlanOriginData.getReqNo().equals(NONE)) {   //IF_TEST_PLN , TEST_PLAN_ORIGIN 일치 x && 새로운 값
 
                 //step2 : 만약, IF_TEST_PLN 값이 수정된다면
@@ -71,11 +71,7 @@ public class TestAllPlanService {
             }
         }
 
-
-
-
-
     }
 
 }
-*/
+
