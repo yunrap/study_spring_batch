@@ -1,15 +1,16 @@
-
 package com.example.study_spring_batch;
 
 
 import com.example.study_spring_batch.domain.*;
 import com.example.study_spring_batch.repository.TestBaminDriverRepository;
 import com.example.study_spring_batch.repository.TestBaminResourceRepository;
+import com.example.study_spring_batch.repository.TestPackageMappingRepository;
 import com.example.study_spring_batch.repository.TestResourceRepository;
 //import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestResourceMappingService;
 import com.example.study_spring_batch.service.TestSchedulerService;
+import com.example.study_spring_batch.service.TestTrackRsvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -32,6 +33,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,11 +50,13 @@ public class TestJobConfiguration {
     //private final TestAllPlanService2 testAllPlanService2;
     private final TestSchedulerService testSchedulerService;
     private final TestResourceMappingService testResourceMappingService;
+    private final TestTrackRsvService testTrackRsvService;
     private final DataSource dataSource;
 
     private final TestResourceRepository testResourceRepository;
     private final TestBaminDriverRepository testDriverRepository;
     private final TestBaminResourceRepository testBaminResourceRepository;
+    private final TestPackageMappingRepository testPackageMappingRepository;
 
     private static final String NONE = "NONE";
     private final int chunckSize = 1;
@@ -63,8 +67,8 @@ public class TestJobConfiguration {
     public Job testJob(){
         return jobBuilderFactory.get("testJob")
                 .start(findAllTestPlan(null))   //시험 계획정보 EAI 연동
-                //.next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
-                //.next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
+                .next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
+                .next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
                 //.next(totalTestTireData(null))  //타이어 집계
                 .build();
     }
@@ -96,7 +100,6 @@ public class TestJobConfiguration {
         return list -> {
             for (TestPlan testPlan : list) {
                 testAllPlanService.testPlanProcess(testPlan);
-
             }
         };
     }
@@ -167,8 +170,8 @@ public class TestJobConfiguration {
             for(TestPlanOrigin tpo : list){
                 String planDay = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-                //step2 : TEST_PLAN_ORIGIN -> TEST_PACKAGE_MAPPING
-                //우선생략
+                //step2 take : TEST_PLAN_ORIGIN -> TEST_PACKAGE_MAPPING
+                List<TestPackageMapping> packageList = testPackageMappingRepository.findAllByName(tpo.getTestItemName());
 
 
                 //step1 : TEST_PLAN_ORIGIN -> TEST_SCHEDULE
@@ -185,11 +188,21 @@ public class TestJobConfiguration {
                     testSchedulerService.insertTestSchedule(planDay, tcReservationCode, tpo);
                 }else
                 {
-                    tpo.setTcSeq(checkRegNo.getTcSeq());    //이미 테스트 스케쥴에 존재할경우 계속 tcseq를 넣어준다
+                    tpo.setTcSeq(checkRegNo.getTcSeq());    //이미 테스트 스케쥴존재 o planorigin에 넣어줌
                 }
 
+                //step2
+                packageList.forEach(testPackageMapping -> {
+                    testTrackRsvService.insertTrackReservation(planDay, testPackageMapping, tpo);
+                });
 
                 //step3
+                // 차량
+                TestBaminResource testBaminResourceCar = testBaminResourceRepository.findByVhclCode(tpo.getVhclCode()).orElseGet(TestBaminResource::new);
+                testResourceMappingService.insertVhclCode(planDay, testBaminResourceCar, tpo);
+
+
+                    //엔지니어
                 if(tpo.getEngineerOneNo() != null){
                     TestBaminResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestBaminResource::new);
                     TestBaminDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestBaminDriver::new);
@@ -206,7 +219,7 @@ public class TestJobConfiguration {
 
     };
 
-    /*
+
     @Bean
     @JobScope
     public Step totalTestTireData(@Value("#{jobParameters[requestDate]}") String requestDate){
@@ -231,7 +244,7 @@ public class TestJobConfiguration {
                         "group_concat(distinct phc.VHCL_NAME) as vhclName," +
                         "group_concat(distinct hpo.TIRE_FLOW) as returnScrap," +
                         "hpo.TC_SEQ as tcSeq " +
-                        "FROM TEST_PLAN_ORIGIN hpo join PG_TEST_CAR phc on hpo.VHCL_CODE = phc.VHCL_CODE" +
+                        "FROM TEST_PLAN_ORIGIN hpo join TEST_BAMIN_CAR phc on hpo.VHCL_CODE = phc.VHCL_CODE" +
                         "GROUP BY REQ_NO, PLN_DTM, TEST_ITEM_NAME")
                 .name("selectTestTireTotal")
                 .build();
@@ -242,11 +255,11 @@ public class TestJobConfiguration {
         return list -> {
             for(TestTireTotal testTireTotal : list) {
                 String[] plnDtm = testTireTotal.getPlnDtm().split("-");
-                System.out.println("=========" + plnDtm);
+                System.out.println("=========PLNDTM" + plnDtm);
             }
         };
     }
-    */
+
 
 }
 

@@ -5,6 +5,7 @@ import com.example.study_spring_batch.domain.TestResourceMapping;
 import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestResourceMappingService;
 import com.example.study_spring_batch.service.TestSchedulerService;
+import com.example.study_spring_batch.service.TestTrackRsvService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,8 +25,8 @@ import java.util.Date;
 @ExtendWith(SpringExtension.class)
 @RunWith(SpringRunner.class)
 @SpringBatchTest
-@SpringBootTest(classes = {TestJobConfiguration.class, TestBatchConfig.class, TestAllPlanService.class, TestSchedulerService.class, TestResourceMappingService.class
-                            })
+@SpringBootTest(classes = {TestJobConfiguration.class, TestBatchConfig.class, TestAllPlanService.class, TestSchedulerService.class, TestResourceMappingService.class,
+                            TestTrackRsvService.class})
 
 @Profile(value = "develop")
 public class SimpleJobTest {
