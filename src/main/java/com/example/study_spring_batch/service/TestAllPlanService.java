@@ -4,7 +4,9 @@ package com.example.study_spring_batch.service;
 import com.example.study_spring_batch.domain.TestPlan;
 import com.example.study_spring_batch.domain.TestPlanOrigin;
 import com.example.study_spring_batch.repository.TestPlanOriginRepository;
+import com.example.study_spring_batch.repository.TestPlnRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,10 +16,16 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TestAllPlanService {
 
+    private final TestPlnRepository testPlnRepository;
     private final TestPlanOriginRepository testPlanOriginRepository;
 
     private static final String NONE = "NONE";  //임의값 변수잡아줄때 사용
     private static Set<String> set = new HashSet<>();
+
+    @Cacheable("iftestpln")
+    public List<TestPlan> getPlnList(){
+        return testPlnRepository.findAll();
+    }
 
     public void testPlanProcess(TestPlan testPlan){
         TestPlanOrigin checkPlanOriginData = testPlanOriginRepository.findSameRow(testPlan.getReqNo(), testPlan.getPlnDtm(), testPlan.getEngineerOne(), testPlan.getEngineerTwo(),
