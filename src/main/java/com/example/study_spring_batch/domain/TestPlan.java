@@ -1,15 +1,23 @@
 package com.example.study_spring_batch.domain;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
+@Builder
 @Getter
 @Setter
-@ToString
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name="IF_TEST_PLN")
 public class TestPlan {
+    @Id
+    @Column(name = "reqNo", nullable = false)
     private String reqNo;
     private LocalDateTime plnDtm;
     private String engineerOne;
@@ -24,4 +32,5 @@ public class TestPlan {
     private String airPrss;
     private String pgsStatus;
     private LocalDateTime udtDtm;
+
 }
