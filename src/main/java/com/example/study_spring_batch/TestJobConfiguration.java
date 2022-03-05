@@ -33,7 +33,9 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -62,6 +64,12 @@ public class TestJobConfiguration {
     private final int chunckSize = 1;
     private static String tcReservationCode = "T220101H000";
 
+    /**
+     * Hint에서 보내준 ifTestPlan 테이블 정보를 저장하는 저장소
+     */
+    @Bean
+    @JobScope
+    public Map<String, String> ifTestPlanData(@Value("#{jobParameters[requestDate]}") String requestDate) {return  new HashMap<>();}
 
     @Bean
     public Job testJob(){
