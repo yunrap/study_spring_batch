@@ -13,7 +13,10 @@ import com.example.study_spring_batch.service.TestSchedulerService;
 import com.example.study_spring_batch.service.TestTrackRsvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.JpaPagingItemReader;
@@ -24,6 +27,10 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -64,21 +71,42 @@ public class TestJobConfiguration {
     private final int chunckSize = 1;
     private static String tcReservationCode = "T220101H000";
 
-    /**
-     * Hint에서 보내준 ifTestPlan 테이블 정보를 저장하는 저장소
-     */
-    @Bean
-    @JobScope
-    public Map<String, String> ifTestPlanData(@Value("#{jobParameters[requestDate]}") String requestDate) {return  new HashMap<>();}
 
     @Bean
     public Job testJob(){
         return jobBuilderFactory.get("testJob")
-                .start(findAllTestPlan(null))   //시험 계획정보 EAI 연동
+                .start(step(null))
+                .listener(jobExecutionListener())
+                .next(findAllTestPlan(null))   //시험 계획정보 EAI 연동
                 .next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
                 .next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
                 //.next(totalTestTireData(null))  //타이어 집계
                 .build();
+    }
+
+    @Bean
+    @JobScope
+    public Step step(@Value("#{jobParameters[requestDate]}") String requestDate){
+        return stepBuilderFactory.get("step")
+                .tasklet(tasklet())
+                .build();
+    }
+
+    @Bean
+    public Tasklet tasklet() {
+        return new MyTasklet(cacheManager());
+    }
+
+    @Bean
+    public JobExecutionListener jobExecutionListener() {
+        return new CachingJobExecutionListener(cacheManager());
+    }
+
+    @Bean
+    public CacheManager cacheManager() {
+        SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
+        simpleCacheManager.setCaches(List.of(new ConcurrentMapCache("referenceData")));
+        return new ConcurrentMapCacheManager(); // return the implementation you want
     }
 
     @Bean
