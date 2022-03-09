@@ -52,7 +52,7 @@ public class TestPlanOrigin {
     @Column(name = "PGS_STATUS")
     private String pgsStatus;
     @Column(name = "UDT_DTM")
-    private LocalDateTime udtDtm;
+    private String udtDtm;
     @Column(name = "TC_SEQ")
     private Integer tcSeq;
     @Column(name = "TR_SEQ")

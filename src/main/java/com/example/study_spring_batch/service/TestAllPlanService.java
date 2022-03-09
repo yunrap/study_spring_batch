@@ -15,26 +15,33 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TestAllPlanService {
 
-    private final IfTestPlnRepository ifTestPlnRepository;
     private final TestPlanOriginRepository testPlanOriginRepository;
+    private final IfTestPlnRepository ifTestPlnRepository;
 
     private static final String NONE = "NONE";  //임의값 변수잡아줄때 사용
     private static Set<String> set = new HashSet<>();
-    private final Map<String, TestPlan> testPlanList = new HashMap<>();
+    private Map<Integer, String> map = new HashMap<>();
 
-    public void testPlanProcess(TestPlan testPlan){
+    public void testPlanProcess(TestPlan testPlan, Map<Integer, String> ifTestPlanBackRepository){
 
-        TestPlan checkOriginData = ifTestPlnRepository.originfindSameRow(testPlan.getReqNo(), testPlan.getPlnDtm(), testPlan.getEngineerOne(), testPlan.getEngineerTwo(),
-                testPlan.getVhclCode(),testPlan.getSpecSize(),testPlan.getBarcdNo(), testPlan.getSetSize(), testPlan.getTireFlow(), testPlan.getTestItemName()
-                , testPlan.getRimSize(), testPlan.getAirPrss(), testPlan.getPgsStatus(),testPlan.getUdtDtm()).orElseGet(TestPlan::new);
-        System.out.println("======checkHintData" + checkOriginData.getReqNo());   //만약 비워있지않으면
+        System.out.println(ifTestPlanBackRepository.toString());
+
+
+        for( Map.Entry<Integer, String> elem : ifTestPlanBackRepository.entrySet() ){
+            System.out.println(elem.getValue()+ "+++++");
+            System.out.println(testPlan.getReqNo() + "=====");
+
+
+            TestPlan checkdata = ifTestPlnRepository.findByReqSeq(elem.getKey());
+
+        }
+
 
 
 
         TestPlanOrigin checkPlanOriginData = testPlanOriginRepository.findSameRow(testPlan.getReqNo(), testPlan.getPlnDtm(), testPlan.getEngineerOne(), testPlan.getEngineerTwo(),
                 testPlan.getVhclCode(),testPlan.getSpecSize(),testPlan.getBarcdNo(), testPlan.getSetSize(), testPlan.getTireFlow(), testPlan.getTestItemName()
                 , testPlan.getRimSize(), testPlan.getAirPrss(), testPlan.getPgsStatus(),testPlan.getUdtDtm()).orElseGet(TestPlanOrigin::new);
-        System.out.println("======checkHintData" + checkPlanOriginData.getReqNo());   // 변경된값 or 새로운값 일때 NONE출력
 
 
         //1. update가 존재할시

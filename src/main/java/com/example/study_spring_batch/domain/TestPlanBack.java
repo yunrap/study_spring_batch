@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "IF_TEST_PLN_V")
-public class TestPlan {
+@Table(name = "IF_TEST_PLN_V_BACK")
+public class TestPlanBack {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "REQ_SEQ")
@@ -47,7 +47,4 @@ public class TestPlan {
     @Column(name = "UDT_DTM")
     private String udtDtm;
 
-    public TestPlan() {
-        this.reqNo = "0";
-    }
 }

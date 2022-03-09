@@ -37,5 +37,5 @@ public interface TestPlanOriginRepository extends JpaRepository<TestPlanOrigin, 
              @Param("rimSize")String rimSize,
              @Param("airPress")String airPress,
              @Param("pgsStatus")String pgsStatus,
-             @Param("udtDtm") LocalDateTime udtDtm);
+             @Param("udtDtm") String udtDtm);
 }
