@@ -6,7 +6,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TestResourceRepository extends JpaRepository<TestResourceMapping, Long> {
-       int countByTcSeqAndTcDayAndDriverNumber(Integer tcSeq, String planDay, int driverNumber);
+
+       int countByTcSeqAndTcDayAndVhclCode(Integer tcSeq, String planDay, String vhclCode);
+
+       int countByTcSeqAndTcDayAndDriverNumber(Integer tcSeq, String planDay, String driverNumber);
 
 
 }
