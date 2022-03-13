@@ -22,7 +22,7 @@ public class TestBaminCar {
     private String name;
     @Column(name = "VHCL_CLR")
     private String color;
-    @Column(name = "MING_FG")
+    @Column(name = "MNG_FG")
     private String mngFg;
     @Column(name = "CRN_DTM")
     private LocalDateTime createTime;

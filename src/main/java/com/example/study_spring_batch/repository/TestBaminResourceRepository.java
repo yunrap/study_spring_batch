@@ -9,6 +9,8 @@ import java.util.Optional;
 @Repository
 public interface TestBaminResourceRepository extends JpaRepository<TestBaminResource, Long> {
 
+    Optional<TestBaminResource> findByVhclCode(String vhclCode);
+
     Optional<TestBaminResource> findByEmployeeNo(String employeeNo);
 
 }

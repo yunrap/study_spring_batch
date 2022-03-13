@@ -39,4 +39,10 @@ public class TestTrackRsvService {
         tpo.setTrSeq(testTrackReservation.getTrSeq());
 
     }
+
+    @Transactional
+    public void deleteTrackReservation(int tcSeq){
+        testTrackRsrvRepository.deleteByTcSeq(tcSeq);
+
+    }
 }

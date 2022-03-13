@@ -14,5 +14,5 @@ public interface TestScheduleRepository extends JpaRepository<TestSchedule,Long>
 
     List<TestSchedule> findByRegNo(String regNo);
 
-    void deleteByTcSeq(int tcSeq);
+    int deleteByTcSeq(int tcSeq);
 }
