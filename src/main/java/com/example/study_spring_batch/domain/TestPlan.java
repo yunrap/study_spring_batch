@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @AllArgsConstructor
-@NoArgsConstructor
 @Table(name = "IF_TEST_PLN_V")
 public class TestPlan {
     @Id
@@ -48,6 +47,6 @@ public class TestPlan {
     private String udtDtm;
 
     public TestPlan() {
-        this.reqNo = "0";
+        this.reqNo = "NONE";
     }
 }

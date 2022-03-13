@@ -5,18 +5,13 @@ import com.example.study_spring_batch.domain.*;
 import com.example.study_spring_batch.repository.TestBaminDriverRepository;
 import com.example.study_spring_batch.repository.TestBaminResourceRepository;
 import com.example.study_spring_batch.repository.TestPackageMappingRepository;
-import com.example.study_spring_batch.repository.TestResourceRepository;
-//import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestAllPlanService;
 import com.example.study_spring_batch.service.TestResourceMappingService;
 import com.example.study_spring_batch.service.TestSchedulerService;
 import com.example.study_spring_batch.service.TestTrackRsvService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.configuration.annotation.JobScope;
-import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.JpaPagingItemReader;
@@ -27,10 +22,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCache;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
-import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -56,13 +47,11 @@ public class TestJobConfiguration {
     private final EntityManagerFactory originEntityManagerFactory;  //DB 당 하나씩사용
 
     private final TestAllPlanService testAllPlanService;
-    //private final TestAllPlanService2 testAllPlanService2;
     private final TestSchedulerService testSchedulerService;
     private final TestResourceMappingService testResourceMappingService;
     private final TestTrackRsvService testTrackRsvService;
     private final DataSource dataSource;
 
-    private final TestResourceRepository testResourceRepository;
     private final TestBaminDriverRepository testDriverRepository;
     private final TestBaminResourceRepository testBaminResourceRepository;
     private final TestPackageMappingRepository testPackageMappingRepository;
@@ -71,12 +60,13 @@ public class TestJobConfiguration {
     private final int chunckSize = 1;
     private static String tcReservationCode = "T220101H000";
 
+    public Map<Integer, String> ifTestPlanBack = new HashMap<>();
+
 
     @Bean
     public Job testJob(){
         return jobBuilderFactory.get("testJob")
-                .start(step(null))
-                .listener(jobExecutionListener())
+                .start(saveIfTestPlan(null)) // 시험 계획정보 BACK UP
                 .next(findAllTestPlan(null))   //시험 계획정보 EAI 연동
                 .next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
                 .next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
@@ -86,28 +76,35 @@ public class TestJobConfiguration {
 
     @Bean
     @JobScope
-    public Step step(@Value("#{jobParameters[requestDate]}") String requestDate){
-        return stepBuilderFactory.get("step")
-                .tasklet(tasklet())
+    public Step saveIfTestPlan(@Value("#{jobParameters[requestDate]}") String requestDate){
+        return stepBuilderFactory.get("saveIfTestPlan")
+                .<TestPlanBack,TestPlanBack>chunk(100)
+                .reader(saveIfTestReader())
+                .writer(saveIfTestWriter())
                 .build();
     }
 
     @Bean
-    public Tasklet tasklet() {
-        return new MyTasklet(cacheManager());
+    public JpaPagingItemReader<TestPlanBack> saveIfTestReader(){
+        return new JpaPagingItemReaderBuilder<TestPlanBack>()
+                .name("saveIfTestReader")
+                .entityManagerFactory(originEntityManagerFactory)
+                .pageSize(100)
+                .queryString("select m from TestPlanBack m order by m.reqSeq desc")
+                .build();
     }
 
-    @Bean
-    public JobExecutionListener jobExecutionListener() {
-        return new CachingJobExecutionListener(cacheManager());
-    }
 
     @Bean
-    public CacheManager cacheManager() {
-        SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
-        simpleCacheManager.setCaches(List.of(new ConcurrentMapCache("referenceData")));
-        return new ConcurrentMapCacheManager(); // return the implementation you want
+    public ItemWriter<TestPlanBack> saveIfTestWriter() {
+        return list -> {
+            for (TestPlanBack testPlanBack : list) {
+                ifTestPlanBack.put(testPlanBack.getReqSeq(), testPlanBack.getReqNo());
+                System.out.println(ifTestPlanBack.toString() + "00000");
+            }
+        };
     }
+
 
     @Bean
     @JobScope
@@ -127,7 +124,7 @@ public class TestJobConfiguration {
                 .dataSource(dataSource)     //연결할 DB의 datasource
                 .rowMapper(new BeanPropertyRowMapper<>(TestPlan.class))     //sql에서 가져온 data를 Object로 바꿔줄 Mapper
                 .sql("SELECT REQ_NO, PLN_DTM, EGNR_EPNO_1 as engineerOne, EGNR_EPNO_2 as engineerTwo, VHCL_CODE, SPEC_SIZE, BARCD_NO, SET_SIZE, TIRE_FLOW, " +
-                        "TEST_ITEM_NAME, RIM_SIZE, AIR_PRSS, PGS_STATUS, UDT_DTM FROM IF_TEST_PLN ORDER BY REQ_NO,PGS_STATUS,UDT_DTM desc")
+                        "TEST_ITEM_NAME, RIM_SIZE, AIR_PRSS, PGS_STATUS, UDT_DTM FROM IF_TEST_PLN_V ORDER BY REQ_NO,PGS_STATUS,UDT_DTM desc")
                 .build();
     }
 
@@ -135,7 +132,8 @@ public class TestJobConfiguration {
     public ItemWriter<TestPlan> findAllPlanWriter() {
         return list -> {
             for (TestPlan testPlan : list) {
-                testAllPlanService.testPlanProcess(testPlan);
+                System.out.println(ifTestPlanBack.toString() + "----ddd");
+                testAllPlanService.testPlanProcess(testPlan, ifTestPlanBack);
             }
         };
     }
@@ -183,9 +181,6 @@ public class TestJobConfiguration {
     public Step insertTestScheduleStep(@Value("#{jobParameters[requestDate]}") String requestDate) {
         return stepBuilderFactory.get("insertTestScheduleStep")
                 .<TestPlanOrigin, TestPlanOrigin>chunk(chunckSize)
-                .faultTolerant()
-                .skip(IllegalArgumentException.class) //IllegalArgumentException 발생 시 skip함
-                .skipLimit(10)
                 .reader(selectTestPlanOriginReader())
                 .writer(insertTestScheduleSeqToTest())
                 .build();
@@ -197,7 +192,7 @@ public class TestJobConfiguration {
                 .name("selectTestPlanOriginReader")
                 .entityManagerFactory(originEntityManagerFactory)
                 .pageSize(chunckSize)
-                .queryString("SELECT h FROM TestPlanOrigin h join fetch h.testCar c")
+                .queryString("SELECT h FROM TestPlanOrigin h left outer join h.testCar c")
                 .build();
     }
 
@@ -234,11 +229,11 @@ public class TestJobConfiguration {
 
                 //step3
                 // 차량
-                TestBaminResource testBaminResourceCar = testBaminResourceRepository.findByVhclCode(tpo.getVhclCode()).orElseGet(TestBaminResource::new);
+                TestBaminResource testBaminResourceCar = testBaminResourceRepository.findByVhclCode(tpo.getVhclCode() == null ? "" : tpo.getVhclCode()).orElseGet(TestBaminResource::new);
                 testResourceMappingService.insertVhclCode(planDay, testBaminResourceCar, tpo);
 
 
-                    //엔지니어
+                //엔지니어
                 if(tpo.getEngineerOneNo() != null){
                     TestBaminResource testResource = testBaminResourceRepository.findByEmployeeNo(tpo.getEngineerOneNo()).orElseGet(TestBaminResource::new);
                     TestBaminDriver testDriver = testDriverRepository.findById(tpo.getEngineerOneNo()).orElseGet(TestBaminDriver::new);
@@ -254,6 +249,9 @@ public class TestJobConfiguration {
         };
 
     };
+
+
+
 
 
     @Bean
