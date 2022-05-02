@@ -2,6 +2,7 @@ package com.example.study_spring_batch.service;
 
 import com.example.study_spring_batch.domain.TestPlanOrigin;
 import com.example.study_spring_batch.domain.TestSchedule;
+import com.example.study_spring_batch.domain.VehiclePlanOrigin;
 import com.example.study_spring_batch.repository.TestScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,27 @@ public class TestSchedulerService {
     @Transactional
     public void deleteTestSchedule(int tcSeq) {
         testScheduleRepository.deleteByTcSeq(tcSeq);
+    }
+
+    public TestSchedule insertEtcTestSchedule(String tcDay, String tcDayEnd, String tcReservationCode, VehiclePlanOrigin v) {
+        return testScheduleRepository.save(TestSchedule.builder()
+                .tcDay(tcDay)
+                .tcDayEnd(tcDayEnd == null ? null : tcDayEnd)
+                .tcReservCode(v.getVhclCode())       //<수정>
+                .regNo(tcReservationCode)
+                .carNumber(v.getBaminCar() == null ? null : v.getBaminCar().getRgsNo())
+                .carVender(v.getBaminCar() == null ? null : v.getBaminCar().getMaker())
+                .carName(v.getBaminCar() == null ? null : v.getBaminCar().getName())
+                .carColor(v.getBaminCar() == null ? null : v.getBaminCar().getColor())
+                .tcRegDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")))
+                .tcAgreement(YES)
+                .tcPurpose(VehiclePlanService.getTcApprovalCode(v.getUseObj()))
+                .tcRegUser(BAMIN)
+                .compName(BAMINDV)
+                .tcApproval(tcApproval)
+                .tcStep(tcStep)
+                .compCode(compCode)
+                .build());
     }
 
 }

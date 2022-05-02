@@ -37,8 +37,6 @@ public class TestAllPlanService {
 
         if(ifTestPlanBackData == null || ifTestPlanBackData.isEmpty()){
 
-            System.out.println("====11111");
-
             Iterator<Integer> keys = ifTestPlanBack.keySet().iterator();
 
             while (keys.hasNext()){
@@ -58,8 +56,6 @@ public class TestAllPlanService {
                 }
             }
         }
-
-        System.out.println(ifTestPlanBackData.toString()+ "=========");
 
         TestPlanOrigin checkPlanOriginData = testPlanOriginRepository.findSameRow(testPlan.getReqNo(), testPlan.getPlnDtm(), testPlan.getEngineerOne(), testPlan.getEngineerTwo(),
                 testPlan.getVhclCode(),testPlan.getSpecSize(),testPlan.getBarcdNo(), testPlan.getSetSize(), testPlan.getTireFlow(), testPlan.getTestItemName()

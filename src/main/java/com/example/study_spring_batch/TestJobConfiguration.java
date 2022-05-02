@@ -5,10 +5,7 @@ import com.example.study_spring_batch.domain.*;
 import com.example.study_spring_batch.repository.TestBaminDriverRepository;
 import com.example.study_spring_batch.repository.TestBaminResourceRepository;
 import com.example.study_spring_batch.repository.TestPackageMappingRepository;
-import com.example.study_spring_batch.service.TestAllPlanService;
-import com.example.study_spring_batch.service.TestResourceMappingService;
-import com.example.study_spring_batch.service.TestSchedulerService;
-import com.example.study_spring_batch.service.TestTrackRsvService;
+import com.example.study_spring_batch.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -31,6 +28,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +48,7 @@ public class TestJobConfiguration {
     private final TestSchedulerService testSchedulerService;
     private final TestResourceMappingService testResourceMappingService;
     private final TestTrackRsvService testTrackRsvService;
+    private final VehiclePlanService vehiclePlanService;
     private final DataSource dataSource;
 
     private final TestBaminDriverRepository testDriverRepository;
@@ -71,6 +70,8 @@ public class TestJobConfiguration {
                 .next(findMaxResvNumber(null)) //테스트 스케쥴에 저장된 가장 최근 ReservationCode 조회
                 .next(insertTestScheduleStep(null))// 조회한 시험 계획정보 INSERT
                 //.next(totalTestTireData(null))  //타이어 집계
+                .start(findVehiclePlanStep(null)) // 시험 외 정보 VIEW 조회
+                .next(insertEtcScheduleStep(null)) // 시험 외 정보 INSERT
                 .build();
     }
 
@@ -251,9 +252,6 @@ public class TestJobConfiguration {
     };
 
 
-
-
-
     @Bean
     @JobScope
     public Step totalTestTireData(@Value("#{jobParameters[requestDate]}") String requestDate){
@@ -290,6 +288,86 @@ public class TestJobConfiguration {
             for(TestTireTotal testTireTotal : list) {
                 String[] plnDtm = testTireTotal.getPlnDtm().split("-");
                 System.out.println("=========PLNDTM" + plnDtm);
+            }
+        };
+    }
+
+    @Bean
+    @JobScope
+    public Step findVehiclePlanStep(@Value("#{jobParameters[requestDate]}") String requestDate) {
+        return stepBuilderFactory.get("findVehiclePlanStep")
+                .<VehiclePlan, VehiclePlan>chunk(chunckSize)
+                .reader(findAllVehiclePlanReader())
+                .writer(findAllVehiclePlanWriter())
+                .build();
+    }
+
+    @Bean
+    public JdbcCursorItemReader<VehiclePlan> findAllVehiclePlanReader() {
+        return new JdbcCursorItemReaderBuilder<VehiclePlan>()
+                .fetchSize(chunckSize)
+                .dataSource(dataSource)
+                .rowMapper(new BeanPropertyRowMapper<>(VehiclePlan.class))
+                .sql("SELECT VHCL_CODE, PLN_DTM_S as plnDtmStart, PLN_DTM_E as plnDtmEnd, EGNR_EPNO as engineer," +
+                        "USE_OBJ, TEST_ROAD, DELETE_YN, CRN_DTM, UDT_DTM FROM IF_VHCL_PLN_V ORDER BY UDT_DTM desc")
+                .name("findAllVehiclePlanReader")
+                .build();
+    }
+
+    public ItemWriter<VehiclePlan> findAllVehiclePlanWriter() {
+        return list -> {
+            for(VehiclePlan vp : list) {
+                vehiclePlanService.vehiclePlanProcess(vp);
+            }
+        };
+    }
+
+    @Bean
+    @JobScope
+    public Step insertEtcScheduleStep(@Value("#{jobParameters[requestDate]}") String requestDate) {
+        return stepBuilderFactory.get("insertEtcScheduleStep")
+                .<VehiclePlanOrigin, VehiclePlanOrigin>chunk(chunckSize)
+                .reader(selectVehiclePlanOriginReader())
+                .writer(insertEtcSchedule())
+                .build();
+    }
+
+    @Bean
+    public JpaPagingItemReader<VehiclePlanOrigin> selectVehiclePlanOriginReader() {
+        return new JpaPagingItemReaderBuilder<VehiclePlanOrigin>()
+                .name("selectVehiclePlanOriginReader")
+                .entityManagerFactory(originEntityManagerFactory)
+                .pageSize(chunckSize)
+                .queryString("SELECT v FROM VehiclePlanOrigin v join fetch v.baminCar c")
+                .build();
+    }
+
+    public ItemWriter<VehiclePlanOrigin> insertEtcSchedule() {
+        return list -> {
+            for (VehiclePlanOrigin vpo : list) {
+                if(vpo.getInsertFlag().equals("Y")) {
+
+                    String tcDay = vpo.getPlnDtmStart().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                    String tcDayEnd = "";
+                    if(vpo.getPlnDtmEnd()==null){
+                        tcDayEnd = null;
+                    }else{
+                        tcDayEnd = vpo.getPlnDtmEnd().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                    }
+                    String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
+                    StringBuilder sb = new StringBuilder();
+                    int n = Integer.parseInt(tcReservationCode.substring(8)) + 1;
+                    tcReservationCode = sb.append("T").append(today).append("H").append(n < 10 ? "00" + n : n < 100 ? "0" + n : String.valueOf(n)).toString();
+                    //INSERT
+                    testSchedulerService.insertEtcTestSchedule(tcDay, tcDayEnd, tcReservationCode, vpo);
+
+                    //Step2
+                    String[] testRoadList = vpo.getTestRoad().split(",");
+                    List<TestTrack> trackList = new ArrayList<>();
+
+
+                }
+
             }
         };
     }
